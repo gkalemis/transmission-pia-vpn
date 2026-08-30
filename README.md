@@ -90,6 +90,9 @@ Check container health:
 docker compose ps
 ```
 
+The port-forward synchronizer becomes unhealthy if it cannot successfully
+confirm PIA's assigned port with Transmission for approximately two minutes.
+
 Confirm that Gluetun obtained a forwarded port and that the synchronizer
 applied the same value to Transmission:
 

@@ -71,6 +71,17 @@ services:
     container_name: transmission-port-forward
     restart: unless-stopped
 
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          test -n "$$(find /tmp/port-forward-healthy -mmin -2 -print -quit
+          2>/dev/null)"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
     depends_on:
       transmission:
         condition: service_healthy
