@@ -34,6 +34,7 @@ services:
     image: lscr.io/linuxserver/transmission:latest
     container_name: transmission
     restart: unless-stopped
+    stop_grace_period: 30s
 
     depends_on:
       gluetun:
