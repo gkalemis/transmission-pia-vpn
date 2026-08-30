@@ -116,7 +116,7 @@ docker compose exec transmission wget -qO- https://ipinfo.io/ip
 
 ## Updating
 
-Review release notes before changing pinned image versions. After an update,
+Review release notes before applying available image updates. After an update,
 recreate the complete stack because Transmission and the synchronizer share
 Gluetun's network namespace:
 
