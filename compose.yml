@@ -1,0 +1,93 @@
+services:
+  gluetun:
+    image: qmcgaw/gluetun:v3.41.3
+    container_name: transmission-vpn
+    restart: unless-stopped
+
+    cap_add:
+      - NET_ADMIN
+
+    devices:
+      - /dev/net/tun:/dev/net/tun
+
+    environment:
+      VPN_SERVICE_PROVIDER: private internet access
+      VPN_TYPE: openvpn
+      OPENVPN_USER: ${PIA_USER:?set in .env}
+      OPENVPN_PASSWORD: ${PIA_PASS:?set in .env}
+      SERVER_REGIONS: ${PIA_REGION:-Netherlands}
+      PORT_FORWARD_ONLY: "true"
+      VPN_PORT_FORWARDING: "on"
+      VPN_PORT_FORWARDING_STATUS_FILE: /gluetun/forwarded_port
+      TZ: Europe/Athens
+
+    volumes:
+      - ./gluetun:/gluetun
+
+    ports:
+      - 9091:9091
+
+    networks:
+      - frontend
+
+  transmission:
+    image: lscr.io/linuxserver/transmission:latest
+    container_name: transmission
+    restart: unless-stopped
+
+    depends_on:
+      gluetun:
+        condition: service_healthy
+
+    network_mode: service:gluetun
+
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          AUTH="$$(printf '%s:%s' "$${USER}" "$${PASS}" | base64)";
+          wget -q -T 5 --spider
+          --header="Authorization: Basic $${AUTH}"
+          http://127.0.0.1:9091/transmission/web/ || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+    environment:
+      PUID: 1000
+      PGID: 1000
+      TZ: Europe/Athens
+      USER: ${TRANSMISSION_USER:?set in .env}
+      PASS: ${TRANSMISSION_PASS:?set in .env}
+
+    volumes:
+      - ${TRANSMISSION_CONFIG_PATH:?set in .env}:/config
+      - ${TRANSMISSION_DATA_PATH:?set in .env}:/data
+
+  port-forward:
+    image: curlimages/curl:latest
+    container_name: transmission-port-forward
+    restart: unless-stopped
+
+    depends_on:
+      transmission:
+        condition: service_healthy
+
+    network_mode: service:gluetun
+
+    environment:
+      TRANSMISSION_USER: ${TRANSMISSION_USER:?set in .env}
+      TRANSMISSION_PASS: ${TRANSMISSION_PASS:?set in .env}
+
+    volumes:
+      - ./gluetun:/gluetun:ro
+      - ./sync-transmission-port.sh:/sync-transmission-port.sh:ro
+
+    entrypoint: /bin/sh
+    command: /sync-transmission-port.sh
+
+networks:
+  frontend:
+    external: true
+    name: frontend
