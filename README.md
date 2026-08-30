@@ -47,12 +47,14 @@ TRANSMISSION_USER=change-me
 TRANSMISSION_PASS=change-me
 PIA_USER=p0000000
 PIA_PASS=change-me
-PIA_REGION=Netherlands
+PIA_REGION=Netherlands # Example; choose the closest supported region
 ```
 
 PIA's OpenVPN credentials can differ from the credentials used to sign in to
-its website. The selected region must support port forwarding; the Compose
-configuration additionally restricts Gluetun to port-forward-capable servers.
+its website. For the best performance, select the closest available PIA region;
+`Netherlands` is only an example. The Compose configuration restricts Gluetun
+to port-forward-capable servers, so it will not connect to an incompatible
+server in the selected region.
 
 Before starting the stack, set the persistent host paths in `.env` for your
 system:
